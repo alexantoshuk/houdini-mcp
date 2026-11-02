@@ -1,0 +1,16 @@
+{
+  "load_package_once": true,
+  "env": [
+    {
+      "HOUDINI_MCP_PLUGIN": {
+        "value": "1"
+      }
+    },
+    {
+      "PYTHONPATH": {
+        "value": "$HOUDINI_PACKAGE_PATH/python",
+        "method": "prepend"
+      }
+    }
+  ]
+}

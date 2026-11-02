@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "houdini-mcp"
+version = "0.1.0"
+description = "OpenAI-compatible MCP server for SideFX Houdini (stdio + Streamable HTTP)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Alex Antoshuk", email = "alexantoshuk@users.noreply.github.com" }]
+urls = { Homepage = "https://github.com/alexantoshuk/houdini-mcp", Repository = "https://github.com/alexantoshuk/houdini-mcp" }
+keywords = ["mcp", "houdini", "sidefx", "openai", "zed"]
+dependencies = [
+  "mcp>=1.0,<3",
+  "pydantic>=2.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "pytest-asyncio>=0.23"]
+
+[project.scripts]
+houdini-mcp = "houdini_mcp.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["houdini_mcp*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

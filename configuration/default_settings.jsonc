@@ -1,0 +1,11 @@
+{
+  // Absolute path to Python if it is not on PATH.
+  // "python_path": "C:\\Python310\\python.exe",
+
+  // Bridge endpoint inside Houdini (see houdini_plugin).
+  "host": "127.0.0.1",
+  "port": 18812,
+
+  // Use mock backend when Houdini is not running.
+  "mock": false
+}
