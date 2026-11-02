@@ -59,14 +59,20 @@ Green status under **Settings → AI → MCP Servers** means the server is activ
 .\scripts\install_houdini_package.ps1
 ```
 
-Restart Houdini. The bridge autostarts on `127.0.0.1:18812` via `scripts/123.py`.
+Restart Houdini. The bridge autostarts on `127.0.0.1:18812` via `scripts/123.py` / `456.py` — **GUI sessions only**. `hython` / `hbatch` skip the bind so they no longer steal the port from a live Houdini (no more renaming hooks to `.bak`).
 
-Manual start inside Houdini Python Shell:
+Manual start / recovery inside Houdini Python Shell:
 
 ```python
 import houdini_mcp_bridge
-houdini_mcp_bridge.start_server(port=18812)
+houdini_mcp_bridge.ensure_bridge()  # preferred — no-op if already listening
+# or: houdini_mcp_bridge.start_server(port=18812)
 ```
+
+| Env | Effect |
+| --- | --- |
+| `HOUDINI_MCP_NO_BRIDGE=1` | Never autostart |
+| `HOUDINI_MCP_BRIDGE=1` | Force autostart even in hython |
 
 ## Tools (OpenAI-style)
 
@@ -76,8 +82,19 @@ Focused tools with input schemas + safety annotations (`readOnlyHint` / `destruc
 - `create_node`, `set_parameter`, `connect_nodes`, `delete_node`
 - `execute_python`, `save_hip`, `load_hip`, `list_node_types`
 - OpenAI company-knowledge pair: `search`, `fetch`
+- Workflow skills: `list_skills`, `get_skill` — load `SKILL.md` from the **public** repo
+  [`alexantoshuk/houdini-mcp`](https://github.com/alexantoshuk/houdini-mcp)
+  (`raw.githubusercontent.com` / Contents API, ref `main`). Local `.cursor/skills/` is offline fallback only.
 
-Also exposes resource `houdini://scene/info` and prompt `houdini_starter_network`.
+Also exposes resources `houdini://scene/info`, `houdini://skills/index`, and prompt `houdini_starter_network`.
+
+| Env | Meaning |
+| --- | --- |
+| `HOUDINI_MCP_SKILLS_REPO` | GitHub `owner/repo` (default `alexantoshuk/houdini-mcp`) |
+| `HOUDINI_MCP_SKILLS_REF` | Branch/tag/commit (default `main`) |
+| `HOUDINI_MCP_SKILLS_SOURCE` | `auto` (github→local), `github`, or `local` |
+
+MCP `instructions` tell the agent to call `get_skill(...)` when the task matches. Push skill edits to `main` before expecting remote agents to see them.
 
 ## Transports
 
@@ -111,5 +128,7 @@ Upstream guides (MIT): [`skills/vendor/fxhoudinimcp/`](skills/vendor/fxhoudinimc
 | --- | --- |
 | `HOUDINI_MCP_HOST` | Bridge host (default `127.0.0.1`) |
 | `HOUDINI_MCP_PORT` | Bridge port (default `18812`) |
+| `HOUDINI_MCP_NO_BRIDGE` | `1` → skip autostart hooks |
+| `HOUDINI_MCP_BRIDGE` | `1` → force autostart in hython too |
 | `HOUDINI_MCP_MOCK` | `1` → in-process mock scene |
 | `HOUDINI_MCP_TRANSPORT` | `stdio` / `streamable-http` |

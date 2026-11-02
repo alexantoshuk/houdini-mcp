@@ -9,6 +9,7 @@ Raw upstream copies: `skills/vendor/fxhoudinimcp/`.
 | --- | --- |
 | `houdini-anim` | anim |
 | `houdini-assets` | assets |
+| `houdini-camera` | camera framing (OBJ / Solaris / husk) — authored |
 | `houdini-character` | character |
 | `houdini-composite` | composite |
 | `houdini-copernicus` | copernicus |

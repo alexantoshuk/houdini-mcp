@@ -1,4 +1,4 @@
-"""Auto-start the Houdini MCP bridge at session startup."""
+"""Auto-start the Houdini MCP bridge at session startup (GUI only)."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ def _bootstrap() -> None:
         sys.path.insert(0, root)
     import houdini_mcp_bridge
 
-    houdini_mcp_bridge.start_server(port=18812, background=True)
+    houdini_mcp_bridge.autostart_bridge()
 
 
 try:

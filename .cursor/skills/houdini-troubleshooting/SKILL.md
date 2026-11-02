@@ -52,6 +52,7 @@ Problem: **(problem_description from user)**
 - USD composition: `get_usd_layers` and `get_usd_composition` for the layer stack.
 - Node type not found: `list_node_types` to confirm the name exists in that context.
 - Memory: `get_sim_memory_usage`, and `get_geometry_info` for polygon counts.
+- **Black / mirrored / wrong-angle beauty, or HIP cam ≠ render:** follow **`houdini-camera`** (optics units, look-at matrix, `/Render` strip, draft spp) before relighting or rebuilding the set.
 
 **(network_housekeeping from user)**
 

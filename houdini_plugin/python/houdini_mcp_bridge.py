@@ -5,14 +5,19 @@ Start from a Python Shell or shelf:
     import houdini_mcp_bridge
     houdini_mcp_bridge.start_server(port=18812)
 
-Or headless:
+Autostart (123.py / 456.py) — GUI only:
+    houdini_mcp_bridge.autostart_bridge()
+
+Or headless (explicit):
     hython houdini_mcp_bridge.py --port 18812
+    # or HOUDINI_MCP_BRIDGE=1 hython …
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import socket
 import sys
 import threading
@@ -25,6 +30,104 @@ DEFAULT_PORT = 18812
 
 _server_thread: threading.Thread | None = None
 _stop_event = threading.Event()
+_last_bind_error: str | None = None
+
+
+def is_gui_session() -> bool:
+    """True only inside interactive Houdini (not hython/hbatch)."""
+    try:
+        import hou
+
+        return bool(hou.isUIAvailable())
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def port_in_use(host: str = DEFAULT_HOST, port: int = DEFAULT_PORT) -> bool:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.settimeout(0.35)
+        try:
+            return sock.connect_ex((host, port)) == 0
+        except OSError:
+            return False
+
+
+def _env_flag(name: str) -> bool | None:
+    raw = os.environ.get(name)
+    if raw is None or raw.strip() == "":
+        return None
+    return raw.strip().lower() in ("1", "true", "yes", "on")
+
+
+def should_autostart_bridge() -> tuple[bool, str]:
+    """Decide whether 123/456 startup hooks should bind the TCP bridge.
+
+    Rules (first match wins):
+    - HOUDINI_MCP_NO_BRIDGE=1 → never
+    - HOUDINI_MCP_BRIDGE=1 → always (even hython)
+    - otherwise → only GUI Houdini sessions
+    """
+    if _env_flag("HOUDINI_MCP_NO_BRIDGE") is True:
+        return False, "HOUDINI_MCP_NO_BRIDGE=1"
+    if _env_flag("HOUDINI_MCP_BRIDGE") is True:
+        return True, "HOUDINI_MCP_BRIDGE=1"
+    if is_gui_session():
+        return True, "gui session"
+    return False, "non-GUI (hython/hbatch) — skip so GUI keeps :18812"
+
+
+def autostart_bridge(
+    host: str | None = None,
+    port: int | None = None,
+) -> dict[str, Any]:
+    """Safe entry for 123.py / 456.py. Never steals the port from a live GUI bridge."""
+    host = host or os.environ.get("HOUDINI_MCP_HOST", DEFAULT_HOST)
+    port = int(port or os.environ.get("HOUDINI_MCP_PORT", DEFAULT_PORT))
+    ok, reason = should_autostart_bridge()
+    info: dict[str, Any] = {"host": host, "port": port, "reason": reason}
+    if not ok:
+        print(f"[houdini-mcp] autostart skipped ({reason})", file=sys.stderr)
+        info["started"] = False
+        return info
+    if port_in_use(host, port):
+        print(
+            f"[houdini-mcp] port {host}:{port} already in use — leaving existing bridge",
+            file=sys.stderr,
+        )
+        info["started"] = False
+        info["already_listening"] = True
+        return info
+    start_server(host=host, port=port, background=True)
+    info["started"] = True
+    info["already_listening"] = False
+    return info
+
+
+def ensure_bridge(
+    host: str | None = None,
+    port: int | None = None,
+) -> dict[str, Any]:
+    """Start bridge if missing (GUI recovery after a failed autostart)."""
+    host = host or os.environ.get("HOUDINI_MCP_HOST", DEFAULT_HOST)
+    port = int(port or os.environ.get("HOUDINI_MCP_PORT", DEFAULT_PORT))
+    if port_in_use(host, port):
+        return {"ok": True, "listening": True, "host": host, "port": port, "action": "noop"}
+    start_server(host=host, port=port, background=True)
+    # Give the thread a moment to bind
+    import time
+
+    for _ in range(20):
+        if port_in_use(host, port):
+            return {"ok": True, "listening": True, "host": host, "port": port, "action": "started"}
+        time.sleep(0.05)
+    return {
+        "ok": False,
+        "listening": False,
+        "host": host,
+        "port": port,
+        "action": "failed",
+        "error": _last_bind_error,
+    }
 
 
 def _result(req_id: str, result: Any) -> dict[str, Any]:
@@ -272,9 +375,20 @@ def _process_line(line: str) -> str:
 
 
 def _serve(host: str, port: int) -> None:
+    global _last_bind_error
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind((host, port))
+    try:
+        sock.bind((host, port))
+    except OSError as exc:
+        _last_bind_error = str(exc)
+        print(
+            f"[houdini-mcp] bind failed on {host}:{port}: {exc}",
+            file=sys.stderr,
+        )
+        sock.close()
+        return
+    _last_bind_error = None
     sock.listen(32)
     sock.settimeout(1.0)
     print(f"[houdini-mcp] bridge listening on {host}:{port}", file=sys.stderr)
@@ -304,7 +418,13 @@ def _serve(host: str, port: int) -> None:
 def start_server(host: str = DEFAULT_HOST, port: int = DEFAULT_PORT, background: bool = True) -> None:
     global _server_thread
     if _server_thread and _server_thread.is_alive():
-        print("[houdini-mcp] bridge already running", file=sys.stderr)
+        print("[houdini-mcp] bridge already running in this process", file=sys.stderr)
+        return
+    if port_in_use(host, port):
+        print(
+            f"[houdini-mcp] port {host}:{port} already in use — not starting a second bridge",
+            file=sys.stderr,
+        )
         return
     _stop_event.clear()
     if background:

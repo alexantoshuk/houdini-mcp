@@ -78,7 +78,7 @@ Pages: `shelf/guidedoceanlayer`, `fluid/sopconfigocean`, `nodes/sop/particleflui
 1. Establish what the camera actually sees, and which mechanism serves which part of it.
 2. Build the base surface first, spectral where possible.
 3. Add a simulated region only where interaction requires it, and blend it in.
-4. `capture_screenshot` against the camera, not a perspective view; oceans read entirely differently from a shot camera.
+4. `capture_screenshot` against the camera, not a perspective view; oceans read entirely differently from a shot camera. Shot framing pitfalls: **`houdini-camera`**.
 5. Cache, then add whitewater downstream.
 
 **(network_housekeeping from user)**

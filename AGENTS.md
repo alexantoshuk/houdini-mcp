@@ -42,7 +42,7 @@ Reusable product code (bridge, MCP tools, installers, skill importers) stays in 
 | `skills/vendor/fxhoudinimcp/` | Upstream raw workflow markdown (MIT attribution) |
 | `skills/ATTRIBUTION.md` | License / source credit |
 
-Start from **`houdini-discipline`** for any non-trivial Houdini task, then the topic skill (`houdini-solaris`, `houdini-model`, `houdini-vex`, …).
+Start from **`houdini-discipline`** for any non-trivial Houdini task, then the topic skill (`houdini-solaris`, `houdini-model`, `houdini-vex`, …). Framing / black beauty / HIP≠render → **`houdini-camera`** (cross-cuts OBJ, Solaris, husk).
 
 Re-import / regenerate Cursor skills: `python scripts/import_fxhoudini_skills.py`  
 Security scan: `python scripts/scan_skills_security.py`
@@ -58,6 +58,7 @@ Skills are living docs for this project:
 
 ## Quick MCP reminders
 
-- Live bridge: `127.0.0.1:18812` (Houdini package / user `scripts/456.py`).
+- Live bridge: `127.0.0.1:18812` — GUI-only via `autostart_bridge()` in `123.py`/`456.py`. hython skips the bind; do not rename hooks to `.bak`. Recovery: `houdini_mcp_bridge.ensure_bridge()`.
 - Prefer typed tools; use `execute_python` only when necessary and never for host shell / network / secrets.
 - External / farm submits and long caches need explicit user confirmation.
+- **Skills vs MCP:** Cursor auto-picks `.cursor/skills/` when this repo is the workspace. MCP `get_skill` / `list_skills` load from **public GitHub** `alexantoshuk/houdini-mcp@main` (local clone = offline fallback). After editing a skill, **push to `main`** so remote MCP clients see it; reload MCP if `server.py` changed.

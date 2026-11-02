@@ -12,12 +12,18 @@ from mcp_types import ToolAnnotations
 from . import __version__
 from .backend import get_backend
 from .bridge_client import BridgeError
+from .skills_catalog import (
+    get_skill as _get_skill,
+    instructions_skill_section,
+    list_skills as _list_skills,
+)
 
 INSTRUCTIONS = (
     "Houdini MCP controls a SideFX Houdini session through typed tools. "
     "Call get_scene_info first to confirm connectivity. Prefer create_node / "
     "set_parameter / connect_nodes over raw execute_python. Use search and fetch "
-    "for node-type documentation. Destructive tools require care; never delete /obj."
+    "for node-type documentation. Destructive tools require care; never delete /obj.\n\n"
+    + instructions_skill_section()
 )
 
 mcp = MCPServer(
@@ -206,10 +212,48 @@ def fetch(id: str) -> dict[str, Any]:
     }
 
 
+@mcp.tool(
+    title="List workflow skills",
+    description=(
+        "List houdini-* Agent Skills shipped with this package. "
+        "Use when choosing which get_skill to load for the current Houdini task."
+    ),
+    annotations=ToolAnnotations(read_only_hint=True, destructive_hint=False, open_world_hint=False),
+)
+def list_skills() -> dict[str, Any]:
+    return {"ok": True, "result": {"skills": _list_skills()}}
+
+
+@mcp.tool(
+    title="Get workflow skill",
+    description=(
+        "Load a houdini-* SKILL.md by name (e.g. houdini-camera, houdini-solaris). "
+        "Call this when the user task matches that skill's topic — especially from "
+        "workspaces that are not the houdini_mcp repo — then follow the skill text."
+    ),
+    annotations=ToolAnnotations(read_only_hint=True, destructive_hint=False, open_world_hint=False),
+)
+def get_skill(name: str) -> dict[str, Any]:
+    payload = _get_skill(name)
+    if not payload.get("ok"):
+        return {"ok": False, "error": {"code": "not_found", "message": payload.get("error", "missing")}}
+    return {
+        "ok": True,
+        "result": payload,
+        "content_text": payload.get("content", ""),
+    }
+
+
 @mcp.resource("houdini://scene/info")
 def scene_info_resource() -> str:
     """Current scene summary resource."""
     return _json(_call("get_scene_info"))
+
+
+@mcp.resource("houdini://skills/index")
+def skills_index_resource() -> str:
+    """Catalog of workflow skills available via get_skill."""
+    return _json({"skills": _list_skills(), "routing": instructions_skill_section()})
 
 
 @mcp.prompt(

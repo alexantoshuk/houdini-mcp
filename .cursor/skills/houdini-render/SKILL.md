@@ -67,10 +67,10 @@ that mostly went away.
 ## Order of work
 
 1. get_render_settings and get_scene_info to establish what renderer and what settings exist. Do not assume Mantra or Karma.
-2. Cameras and framing before light, light before material, material before sampling. Each of those invalidates judgements about the next.
-3. Preview in the viewport, not on disk.
+2. Cameras and framing before light, light before material, material before sampling. Each of those invalidates judgements about the next. Framing pitfalls (OBJ / Solaris / husk, black plates, HIP≠beauty, draft spp) → **`houdini-camera`**.
+3. Preview in the viewport or a **low-spp draft** (≈4 spp / ~960×540). Do not burn final samples until the user approves framing and look.
 4. Sampling and quality last, once the image is right and only the noise is wrong.
-5. start_render with a written frame range and output path, and get_render_progress rather than guessing at completion.
+5. start_render / husk with a written frame range and output path only after approval; never block MCP `execute_python` on a long husk.
 
 **(network_housekeeping from user)**
 

@@ -32,5 +32,26 @@ $pluginPath = $Plugin.Replace("\", "/")
 }
 "@ | Set-Content -Encoding UTF8 $pkgJson
 
+# Sync user-prefs startup hooks so they call GUI-only autostart (no .bak dance).
+$scriptsDir = Join-Path $targetPrefs "scripts"
+New-Item -ItemType Directory -Force -Path $scriptsDir | Out-Null
+$hook = @"
+"""User-prefs hook — GUI-only MCP bridge autostart (skips hython/hbatch)."""
+from __future__ import annotations
+import sys
+root = r"$($Plugin.Replace('\', '\\'))\python"
+if root not in sys.path:
+    sys.path.insert(0, root)
+try:
+    import houdini_mcp_bridge
+    houdini_mcp_bridge.autostart_bridge()
+except Exception as exc:
+    print("[houdini-mcp] autostart failed:", exc)
+"@
+Set-Content -Encoding UTF8 (Join-Path $scriptsDir "123.py") $hook
+Set-Content -Encoding UTF8 (Join-Path $scriptsDir "456.py") $hook
+
 Write-Host "Installed Houdini package -> $pkgJson"
-Write-Host "Restart Houdini. Bridge will listen on 127.0.0.1:18812"
+Write-Host "Synced startup hooks -> $scriptsDir\123.py / 456.py"
+Write-Host "Restart Houdini. Bridge listens on 127.0.0.1:18812 (GUI only)."
+Write-Host "Recovery in Python Shell: houdini_mcp_bridge.ensure_bridge()"
