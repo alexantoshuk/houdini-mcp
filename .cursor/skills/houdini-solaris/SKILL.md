@@ -118,6 +118,16 @@ hand-typed paths to be what breaks after a rename.
 - **Pattern is slow on a big stage.** No pruning, so every prim on the stage is being compared. Prune with `~`, narrow with `&`.
 - **Stage slow to open.** Payloads all loading by default. configurestage, or an input-less sublayer, controls that.
 
+## husk / Karma CLI pitfalls (learned)
+
+- **Black / tiny EXR while cube tests OK.** Often the Camera LOP exported with controls still on *Do Nothing*, or optics in broken units (`focalLength≈0.5`, `horizontalAperture≈0.21`). Force every camera `*control*` parm to **Set**, then after USD export rewrite `focalLength`/`apertures`/`clippingRange` in mm (e.g. 28 / 41.4214 / 23.3).
+- **Look-at, not rotate guesses.** Place the camera with a USD look-at matrix from eye → mesh bbox center. RotateXYZ from LOP parms is easy to aim into empty space; husk then finishes in <1s with a black plate.
+- **Strip `/Render` for CLI husk.** `karmarendersettings` writes `/Render/Products` that can make husk exit instantly black. For `husk file.usd -c /cameras/...` export from a null *above* karma settings, or delete `/Render` in a post-pass.
+- **DomeLight_1 + hot SphereLights.** Scene Import / light LOPs may author `DomeLight_1`. Prefer plain `DomeLight` + soft `DistantLight`; keep intensities modest (~1) or beauty blows out.
+- **SOP materials → GeomSubsets.** Stamp `s@shop_materialpath` on prims *before* merge (per-box wrangle). A post-merge center heuristic will collapse chrome/steel/sink into cabinets. Bind `UsdPreviewSurface` for husk-portable lookdev; Principled-only USD graphs often shade weak/black under husk.
+- **hython steals the MCP bridge.** User `Documents/houdiniXX.Y/scripts/123.py` / `456.py` auto-start the TCP bridge and race port 18812. Rename to `.bak` around hython/husk batch jobs, then restore.
+- **Do not sync-husk on the bridge.** Long `husk` inside `execute_python` blocks MCP. Write USD, return, run husk out-of-process.
+
 ## Core LOP vocabulary
 
 <!-- BEGIN GENERATED: lop vocabulary -->
