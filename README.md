@@ -93,6 +93,18 @@ pip install -e ".[dev]"
 pytest -q
 ```
 
+## Skills (Cursor / agents)
+
+Project skills live in `.cursor/skills/houdini-*/SKILL.md` (33 skills):
+
+- **Solaris / assets / model / VEX** — `houdini-solaris`, `houdini-assets`, `houdini-model`, `houdini-vex`
+- **Sims** — pyro, fluid, vellum, destruction, mpm, ocean, grains, …
+- **Pipeline** — tops, io, render, shade, character, crowds, …
+- **Defaults** — `houdini-discipline` (senior operating rules)
+
+Index + attribution: [`skills/README.md`](skills/README.md).  
+Upstream guides (MIT): [`skills/vendor/fxhoudinimcp/`](skills/vendor/fxhoudinimcp/).
+
 ## Environment
 
 | Variable | Meaning |
