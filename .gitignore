@@ -13,5 +13,26 @@ target/
 Cargo.lock
 *.hip
 *.hipnc
+*.bgeo
+*.bgeo.sc
+*.usd
+*.usda
+*.usdc
+*.usdz
+*.exr
+*.png
+*.jpg
+*.jpeg
+*.mp4
+render/
+# Scene-specific / scratch drivers (keep product scripts only)
+scripts/build_*_solaris.py
+scripts/fix_*_render.py
+scripts/kitchen_*.py
+scripts/run_kitchen_*.py
+scripts/run_code_on_bridge.py
+scripts/probe_*.py
+scripts/_*.py
 .DS_Store
 Thumbs.db
+untitled.hip*
